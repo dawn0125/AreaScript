@@ -24,6 +24,8 @@ ALternative procedure:
     
 Notes: 
     - did not add scale yet 
+    - sometimes detects some of the surface as additional "pores"
+    - sometimes ignores pores that intersect that usrface 
 """
 import os
 import cv2 as cv
@@ -31,6 +33,7 @@ import numpy as np
 import pandas as pd 
 from rembg import remove 
 import matplotlib.pyplot as plt
+from scipy import ndimage 
 
 #=============================FUNCTIONS========================================
     
@@ -53,18 +56,6 @@ def threshOtsu(img):
     ret, thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
     return thresh
 
-def threshold(img, manual):
-    if manual == True: 
-        print('Enter Lower Bin:')
-        lower = int(input())
-        print('Enter Upper Bin:')
-        upper = int(input())
-        
-        return threshManual(img, lower, upper)
-    
-    else: 
-        return threshOtsu(img)
-
 def findContours(img):
     '''
     img: image array 
@@ -73,7 +64,7 @@ def findContours(img):
     '''
     if np.ndim(img) != 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
     return contours
 
 def findAreas(contours):
@@ -177,16 +168,16 @@ def getSampleMask(img):
 #=============================MAIN========================================
 # directories
 img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Area Images - Copy'
-thresh_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Thresh Images'
+summary_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images'
 excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Area Images/Areas.xlsx'
 
 #  parameters 
 loi = os.listdir(img_directory)
-acceptedFileTypes = ['tif']
+acceptedFileTypes = ['tif'] # add more as needed 
 show_thresh = True
-save_thresh = True
 show_contours = True
-scale = 1
+save_summary_pics = True
+scale = 0.002 # mm/px
 
 # threshing 
 manual_threshing = False
@@ -200,10 +191,12 @@ problem_pics = []
 # excel data 
 data = []
 
-if not os.path.exists(thresh_directory) and save_thresh == True:
-    os.makedirs(thresh_directory)
-    
+
 # if saveThresh = True and threshDir does not exist, make directory 
+if not os.path.exists(summary_directory) and save_summary_pics == True:
+    os.makedirs(summary_directory)
+    
+
 # loop through images in image directory 
 for i in loi:
     if( '.' in i and i.split('.')[-1] in acceptedFileTypes):
@@ -211,28 +204,25 @@ for i in loi:
             f = img_directory + '/' + i
             img = cv.imread(f)
             
-            print('filtering ' + i)
+            print('Processing ' + i)
             
             # create a mask which detects where the sample is 
             mask = getSampleMask(img)
-
-            # plt.subplot(121), plt.imshow(img)
-            # plt.title(i)
-            # plt.subplot(122), plt.imshow(mask)
-            # plt.show()
             
         except: 
-            print('\nIssue filtering ' + i + '\n')
+            print('\nPROBLEM EXTRACTING MASK FOR ' + i + '\n')
             issues += 1
             problem_pics.append(i)
 
-
+        # blur slightly 
+        blurred = ndimage.gaussian_filter(img, 2, mode='nearest')
+        
         # begin threshing 
         if manual_threshing == True:
-            thresh_img = threshManual(img, lower_thresh, upper_thresh)
+            thresh_img = threshManual(blurred, lower_thresh, upper_thresh)
             
         elif manual_threshing == False:
-            thresh_img = threshOtsu(img)
+            thresh_img = threshOtsu(blurred)
         
         sample_only = cv.bitwise_and(thresh_img, mask) 
         
@@ -243,14 +233,9 @@ for i in loi:
             plt.subplot(312), plt.imshow(thresh_img)
             plt.title('Thresh')
             plt.subplot(313), plt.imshow(sample_only)
-            plt.title('BGRemoved')
+            plt.title('Sample Only')
             plt.tight_layout()
             plt.show()
-        
-        # save thresh into thresh directory 
-        if save_thresh == True:
-            cv.imwrite(thresh_directory  + '/' + i, sample_only)
-        
         
         # find contours of thresh and the areas of each contour: 
         cnts = findContours(sample_only)
@@ -258,24 +243,29 @@ for i in loi:
         max_area_index = np.argsort(areas)[-1]
         
         # output contours, white is the body and blue is the pores/scratches
-        if show_contours == True: 
-            im = np.zeros_like(img)
-            for cnt in cnts:
-                cv.drawContours(im, cnt, -1, (0, 255, 255), 5)
-            cv.drawContours(im, cnts[max_area_index], -1, (255, 255, 255), 10)
-            plt.imshow(im)
+        cnt_img = img.copy()
+        for cnt in cnts:
+            cv.drawContours(cnt_img, cnt, -1, (0, 255, 255), 5)
+        cv.drawContours(cnt_img, cnts[max_area_index], -1, (255, 255, 255), 10)
+            
+        if show_contours == True:
+            plt.imshow(cnt_img)
+            plt.title(i)
             plt.show()
+            
+        if save_summary_pics == True:
+            cv.imwrite(summary_directory + '/summary_' + i, cnt_img)
     
         # write all this information into a csv + info Vurgun wants 
-        whole_area = np.sort(areas)[-1] * scale
-        pore_area = np.sum(areas) - np.sort(areas)[-1] * scale
+        whole_area = np.sort(areas)[-1] * scale ** 2
+        pore_area = np.sum(areas) - np.sort(areas)[-1] * scale ** 2
         body_area = whole_area - pore_area
-        ratio_area = pore_area/ body_area * 100 
+        ratio_area = pore_area / body_area 
         
         # save to csv  
         data.append([body_area, ratio_area])
         
-        # print iformation
+        # print information
         print('\narea of body = {}'.format(body_area))
         print('area of pores = {}'.format(pore_area))
         print('ratio = {}'.format(ratio_area))
