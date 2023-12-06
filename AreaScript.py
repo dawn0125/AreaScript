@@ -164,7 +164,7 @@ def getSampleMask(img):
 
 #=============================MAIN========================================
 # directories
-img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Area Images - Copy'
+img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/TestFolder'
 summary_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images'
 excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Area Images/Areas.xlsx'
 
@@ -222,6 +222,7 @@ for i in loi:
             thresh_img = threshOtsu(blurred)
         
         sample_only = cv.bitwise_and(thresh_img, mask) 
+        under_flow = cv.bitwise_and(thresh_img, ~mask)
         
         # output comparison images only if you want to verify the thresh is good 
         if show_thresh == True:
@@ -236,6 +237,9 @@ for i in loi:
         
         # find contours of thresh and the areas of each contour: 
         cnts = findContours(sample_only)
+        under_flow_cnts = findContours(under_flow)
+        
+        print('underflow areas = ' + str(np.sum(findAreas(under_flow_cnts))))
         areas = findAreas(cnts)
         max_area_index = np.argsort(areas)[-1]
             
@@ -243,6 +247,8 @@ for i in loi:
         cnt_img = img.copy()
         for cnt in cnts:
             cv.drawContours(cnt_img, cnt, -1, (0, 255, 255), 5)
+        for cnt in under_flow_cnts:
+            cv.drawContours(cnt_img, cnt, -1, (0, 0, 255), 5)
         cv.drawContours(cnt_img, cnts[max_area_index], -1, (255, 255, 255), 10)
             
         if show_contours == True:
