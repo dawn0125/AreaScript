@@ -12,18 +12,16 @@ How to Use:
     
 Procedure: 
     1. Iterates through a folder of images
-    2. From each image, remove the background using REMBG remove
-    3. Find the contours of the image using cv.findContours
-    4. Separate the contour with the largest area (it will be the sample)
-    4. Return the area of the remaining contours (pores)
-    5. Save information and export file 
-    
-ALternative procedure: 
-    1. find the "substrate?", create a mask of the sample above the substrate
-    2. Previous procedure from step 3-5 
+    2. Blur details, find the first white pixel from the 1st and last columns 
+    3. Connect white pixels with a line (y = mx + b)
+    4. Create a mask to only analyze the sample above the line 
+    5. Thresh either manually or with OTSU method 
+    6. Find the contours of the image using cv.findContours
+    7. Separate the contour with the largest area (it will be the sample)
+    8. Return the area of the remaining contours (pores)
+    9. Save information and export file 
     
 Notes: 
-    - did not add scale yet 
     - sometimes detects some of the surface as additional "pores"
     - sometimes ignores pores that intersect that usrface 
 """
@@ -31,7 +29,6 @@ import os
 import cv2 as cv
 import numpy as np
 import pandas as pd 
-from rembg import remove 
 import matplotlib.pyplot as plt
 from scipy import ndimage 
 
@@ -241,7 +238,7 @@ for i in loi:
         cnts = findContours(sample_only)
         areas = findAreas(cnts)
         max_area_index = np.argsort(areas)[-1]
-        
+            
         # output contours, white is the body and blue is the pores/scratches
         cnt_img = img.copy()
         for cnt in cnts:
@@ -257,8 +254,8 @@ for i in loi:
             cv.imwrite(summary_directory + '/summary_' + i, cnt_img)
     
         # write all this information into a csv + info Vurgun wants 
-        whole_area = np.sort(areas)[-1] * scale ** 2
-        pore_area = np.sum(areas) - np.sort(areas)[-1] * scale ** 2
+        whole_area = np.sort(areas)[-1] * (scale ** 2)
+        pore_area = (np.sum(areas) * (scale ** 2)) - whole_area
         body_area = whole_area - pore_area
         ratio_area = pore_area / body_area 
         
