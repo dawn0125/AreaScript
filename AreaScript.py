@@ -22,8 +22,8 @@ Procedure:
     9. Save information and export file 
     
 Notes: 
-    - sometimes detects some of the surface as additional "pores"
-    - sometimes ignores pores that intersect that usrface 
+    - for the images, the surface must touch the edge of the image
+    - sometimes ignores pores that intersect that surface
 """
 import os
 import cv2 as cv
