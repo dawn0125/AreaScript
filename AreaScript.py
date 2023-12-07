@@ -62,7 +62,7 @@ def findContours(img):
     if np.ndim(img) != 2:
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-    return contours
+    return contours, hierarchy
 
 def findAreas(contours):
     '''
@@ -171,7 +171,7 @@ excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images/Areas.
 #  parameters 
 loi = os.listdir(img_directory)
 acceptedFileTypes = ['tif'] # add more as needed 
-show_thresh = True
+show_thresh = False
 show_contours = True
 save_summary_pics = True
 scale = 0.002 # mm/px
@@ -235,16 +235,21 @@ for i in loi:
             plt.show()
         
         # find contours of thresh and the areas of each contour: 
-        cnts = findContours(sample_only)
+        cnts, hier = findContours(sample_only)
+        parent = hier[:,:,3][0]
         areas = findAreas(cnts)
         max_area_index = np.argsort(areas)[-1]
-            
+        
         # output contours, white is the body and blue is the pores/scratches
         cnt_img = img.copy()
-        for cnt in cnts:
-            cv.drawContours(cnt_img, cnt, -1, (0, 255, 255), 5)
+        # only add to pore area if the contour is within the sample 
+        pore_area = 0
+        for j in np.arange(len(cnts)):
+            if parent[j] == max_area_index: #and areas[j] >= 100:
+                pore_area += areas[j]
+                cv.drawContours(cnt_img, cnts[j], -1, (0, 255, 255), 5)   
         cv.drawContours(cnt_img, cnts[max_area_index], -1, (255, 255, 255), 10)
-            
+        
         if show_contours == True:
             plt.imshow(cnt_img)
             plt.title(i)
@@ -254,18 +259,18 @@ for i in loi:
             cv.imwrite(summary_directory + '/summary_' + i, cnt_img)
     
         # write all this information into a csv + info Vurgun wants 
-        whole_area = np.sort(areas)[-1] * (scale ** 2)
-        pore_area = (np.sum(areas) * (scale ** 2)) - whole_area
+        pore_area = pore_area * (scale ** 2)
+        whole_area = areas[max_area_index] * (scale ** 2)
         body_area = whole_area - pore_area
-        ratio_area = pore_area / body_area 
+        ratio = pore_area / whole_area
         
         # save to csv  
-        data.append([body_area, ratio_area])
+        data.append([body_area, ratio])
         
         # print information
         print('\narea of body = {}'.format(body_area))
         print('area of pores = {}'.format(pore_area))
-        print('ratio = {}'.format(ratio_area))
+        print('ratio = {}'.format(ratio))
         print('\n')
         
 df = pd.DataFrame(data=list(data), columns=['body area', 'ratio'])
