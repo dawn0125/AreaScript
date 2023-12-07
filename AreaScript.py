@@ -164,9 +164,9 @@ def getSampleMask(img):
 
 #=============================MAIN========================================
 # directories
-img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Area Images - Copy'
+img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Cropped Images'
 summary_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images'
-excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Area Images/Areas.xlsx'
+excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images/Areas.xlsx'
 
 #  parameters 
 loi = os.listdir(img_directory)
