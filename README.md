@@ -29,6 +29,4 @@
   - Right under "Type", click "Adjust" and then click threshold
  
 ### Notes: ###
-- I've pasted functions from Vihara's Dimension Functions that she wrote for Tim, however they haven't been implemented yet
-  - more info at: https://github.com/ViharaJ/GetDimensions
 - This script ignores pores that intersect with the surface. this is a bug that needs to be fixed 
