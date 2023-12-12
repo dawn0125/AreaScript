@@ -226,11 +226,11 @@ for i in loi:
         # output comparison images only if you want to verify the thresh is good 
         if show_thresh == True:
             plt.subplot(311), plt.imshow(img)
-            plt.title(i)
+            plt.title(i), plt.xticks([]), plt.yticks([])
             plt.subplot(312), plt.imshow(thresh_img)
-            plt.title('Thresh')
+            plt.title('Thresh'), plt.xticks([]), plt.yticks([])
             plt.subplot(313), plt.imshow(sample_only)
-            plt.title('Sample Only')
+            plt.title('Sample Only'), plt.xticks([]), plt.yticks([])
             plt.tight_layout()
             plt.show()
         
@@ -252,7 +252,7 @@ for i in loi:
         
         if show_contours == True:
             plt.imshow(cnt_img)
-            plt.title(i)
+            plt.title(i), plt.xticks([]), plt.yticks([])
             plt.show()
             
         if save_summary_pics == True:
