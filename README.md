@@ -29,4 +29,5 @@
   - Right under "Type", click "Adjust" and then click threshold
  
 ### Notes: ###
-- This script ignores pores that intersect with the surface. this is a bug that needs to be fixed 
+- This script ignores pores that intersect with the surface. this is a bug that needs to be fixed
+- Vihara's Dimension Functions are here, but not implemented yet
