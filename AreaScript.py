@@ -24,13 +24,11 @@ Procedure:
 Notes: 
     - for the images, the surface must touch the edge of the image
     - sometimes ignores pores that intersect that surface
-    - Uses Vihara's RegDim functions: https://github.com/ViharaJ/GetDimensions
 """
 import os
 import cv2 as cv
 import numpy as np
 import pandas as pd 
-import Vihara.Functions as vi
 import matplotlib.pyplot as plt
 from scipy import ndimage 
 
