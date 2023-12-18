@@ -247,8 +247,8 @@ for i in loi:
         for j in np.arange(len(cnts)):
             if parent[j] == max_area_index: #and areas[j] >= 100:
                 pore_area += areas[j]
-                cv.drawContours(cnt_img, cnts[j], -1, (0, 255, 255), 5)   
-        cv.drawContours(cnt_img, cnts[max_area_index], -1, (255, 255, 255), 10)
+                cv.drawContours(cnt_img, cnts, j, (0, 255, 255), 5)   
+        cv.drawContours(cnt_img, cnts, max_area_index, (255, 255, 255), 10)
         
         if show_contours == True:
             plt.imshow(cnt_img)
