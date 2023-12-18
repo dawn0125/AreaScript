@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 from scipy import ndimage 
+from rembg import remove 
 
 #=============================FUNCTIONS========================================
     
@@ -162,9 +163,26 @@ def getSampleMask(img):
     
     return mask 
 
+def test(img):
+    # heavily filter the image to remove details 
+    blurred = heavilyBlur(img)
+    
+    # make the image black and white 
+    thresh_img = threshOtsu(blurred)
+    
+    # segment the surface 
+    surface_mask = createSurfaceMask(thresh_img)
+    surface_mask = ~surface_mask 
+    
+    sample_mask = remove(img, post_process_mask = True, only_mask = True)
+    
+    mask = cv.bitwise_and(sample_mask, surface_mask)
+    
+    return mask
+    
 #=============================MAIN========================================
 # directories
-img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Cropped Images'
+img_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/TestFolder'
 summary_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images'
 excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images/Areas.xlsx'
 
@@ -172,8 +190,8 @@ excel_directory = '//wp-oft-nas/HiWis/GM_Dawn_Zheng/Vurgun/Summary Images/Areas.
 loi = os.listdir(img_directory)
 acceptedFileTypes = ['tif'] # add more as needed 
 show_thresh = False
-show_contours = True
-save_summary_pics = True
+show_contours = False
+save_summary_pics = False
 scale = 0.002 # mm/px
 
 # threshing 
@@ -204,82 +222,99 @@ for i in loi:
             print('Processing ' + i)
             
             # create a mask which detects where the sample is 
-            mask = getSampleMask(img)
+            # mask = getSampleMask(img)
+            
+            # start test
+            blurred = heavilyBlur(img)
+            
+            # make the image black and white 
+            thresh_img = threshOtsu(blurred)
+            
+            # segment the surface 
+            surface_mask = createSurfaceMask(thresh_img)
+            surface_mask = np.abs(surface_mask - 1)
+            
+            sample_mask = remove(img, post_process_mask = True, only_mask = True)
+            
+            mask = cv.bitwise_and(sample_mask, surface_mask)
+            
+            plt.imshow(mask)
+            plt.show()
             
         except: 
             print('\nPROBLEM EXTRACTING MASK FOR ' + i + '\n')
             issues += 1
             problem_pics.append(i)
 
-        # blur slightly 
-        blurred = ndimage.gaussian_filter(img, 2, mode='nearest')
+#         # blur slightly 
+#         blurred = ndimage.gaussian_filter(img, 2, mode='nearest')
         
-        # begin threshing 
-        if manual_threshing == True:
-            thresh_img = threshManual(blurred, lower_thresh, upper_thresh)
+#         # begin threshing 
+#         if manual_threshing == True:
+#             thresh_img = threshManual(blurred, lower_thresh, upper_thresh)
             
-        elif manual_threshing == False:
-            thresh_img = threshOtsu(blurred)
+#         elif manual_threshing == False:
+#             thresh_img = threshOtsu(blurred)
         
-        sample_only = cv.bitwise_and(thresh_img, mask) 
+#         sample_only = cv.bitwise_and(thresh_img, mask) 
         
-        # output comparison images only if you want to verify the thresh is good 
-        if show_thresh == True:
-            plt.subplot(311), plt.imshow(img)
-            plt.title(i), plt.xticks([]), plt.yticks([])
-            plt.subplot(312), plt.imshow(thresh_img)
-            plt.title('Thresh'), plt.xticks([]), plt.yticks([])
-            plt.subplot(313), plt.imshow(sample_only)
-            plt.title('Sample Only'), plt.xticks([]), plt.yticks([])
-            plt.tight_layout()
-            plt.show()
+#         # output comparison images only if you want to verify the thresh is good 
+#         if show_thresh == True:
+#             plt.subplot(311), plt.imshow(img)
+#             plt.title(i), plt.xticks([]), plt.yticks([])
+#             plt.subplot(312), plt.imshow(thresh_img)
+#             plt.title('Thresh'), plt.xticks([]), plt.yticks([])
+#             plt.subplot(313), plt.imshow(sample_only)
+#             plt.title('Sample Only'), plt.xticks([]), plt.yticks([])
+#             plt.tight_layout()
+#             plt.show()
         
-        # find contours of thresh and the areas of each contour: 
-        cnts, hier = findContours(sample_only)
-        parent = hier[:,:,3][0]
-        areas = findAreas(cnts)
-        max_area_index = np.argsort(areas)[-1]
+#         # find contours of thresh and the areas of each contour: 
+#         cnts, hier = findContours(sample_only)
+#         parent = hier[:,:,3][0]
+#         areas = findAreas(cnts)
+#         max_area_index = np.argsort(areas)[-1]
         
-        # output contours, white is the body and blue is the pores/scratches
-        cnt_img = img.copy()
-        # only add to pore area if the contour is within the sample 
-        pore_area = 0
-        for j in np.arange(len(cnts)):
-            if parent[j] == max_area_index: #and areas[j] >= 100:
-                pore_area += areas[j]
-                cv.drawContours(cnt_img, cnts, j, (0, 255, 255), 5)   
-        cv.drawContours(cnt_img, cnts, max_area_index, (255, 255, 255), 10)
+#         # output contours, white is the body and blue is the pores/scratches
+#         cnt_img = img.copy()
+#         # only add to pore area if the contour is within the sample 
+#         pore_area = 0
+#         for j in np.arange(len(cnts)):
+#             if parent[j] == max_area_index: #and areas[j] >= 100:
+#                 pore_area += areas[j]
+#                 cv.drawContours(cnt_img, cnts, j, (0, 255, 255), 5)   
+#         cv.drawContours(cnt_img, cnts, max_area_index, (255, 255, 255), 10)
         
-        if show_contours == True:
-            plt.imshow(cnt_img)
-            plt.title(i), plt.xticks([]), plt.yticks([])
-            plt.show()
+#         if show_contours == True:
+#             plt.imshow(cnt_img)
+#             plt.title(i), plt.xticks([]), plt.yticks([])
+#             plt.show()
             
-        if save_summary_pics == True:
-            cv.imwrite(summary_directory + '/summary_' + i, cnt_img)
+#         if save_summary_pics == True:
+#             cv.imwrite(summary_directory + '/summary_' + i, cnt_img)
     
-        # write all this information into a csv + info Vurgun wants 
-        pore_area = pore_area * (scale ** 2)
-        whole_area = areas[max_area_index] * (scale ** 2)
-        body_area = whole_area - pore_area
-        ratio = pore_area / whole_area
+#         # write all this information into a csv + info Vurgun wants 
+#         pore_area = pore_area * (scale ** 2)
+#         whole_area = areas[max_area_index] * (scale ** 2)
+#         body_area = whole_area - pore_area
+#         ratio = pore_area / whole_area
         
-        # save to csv  
-        data.append([body_area, ratio])
+#         # save to csv  
+#         data.append([body_area, ratio])
         
-        # print information
-        print('\narea of body = {}'.format(body_area))
-        print('area of pores = {}'.format(pore_area))
-        print('ratio = {}'.format(ratio))
-        print('\n')
+#         # print information
+#         print('\narea of body = {}'.format(body_area))
+#         print('area of pores = {}'.format(pore_area))
+#         print('ratio = {}'.format(ratio))
+#         print('\n')
         
-df = pd.DataFrame(data=list(data), columns=['body area', 'ratio'])
-df.to_excel(excel_directory)
+# df = pd.DataFrame(data=list(data), columns=['body area', 'ratio'])
+# df.to_excel(excel_directory)
 
 
-if issues > 0:
-    print('number of issues: ' + str(issues))
-    print('issues with: ') 
-    print(problem_pics)
+# if issues > 0:
+#     print('number of issues: ' + str(issues))
+#     print('issues with: ') 
+#     print(problem_pics)
     
-print('Done Processing!')
+# print('Done Processing!')
