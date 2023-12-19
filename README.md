@@ -27,6 +27,3 @@
   - download FIJI from: https://imagej.net/software/fiji/downloads
   - From menu at the top, click Image and change "Type" to 8-bit
   - Right under "Type", click "Adjust" and then click threshold
- 
-### Notes: ###
-- This script ignores pores that intersect with the surface. this is a bug that needs to be fixed
