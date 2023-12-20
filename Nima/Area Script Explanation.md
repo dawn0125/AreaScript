@@ -21,6 +21,7 @@ The functions defined in lines 90 - 119 do the procedure above:
 
 
 ```python
+# lines 90 - 119
 def findTransition(col):
     '''
     finds the point where there are 10 consecutive white pixels  
