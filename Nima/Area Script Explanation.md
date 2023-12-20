@@ -5,7 +5,7 @@ This document was created for Nima and Vurgun for off-boarding purposes. It expl
 1. Find surface 
 2. Extract the part of the sample **above** the surface 
 3. Find area of pores and area of sample
-4. Calculate **orosity** and save data to CSV/Excel file
+4. Calculate **porosity** and save data to CSV/Excel file
 
 The contents of this document follow the order of the procedure. 
 
