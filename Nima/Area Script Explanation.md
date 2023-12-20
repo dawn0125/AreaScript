@@ -13,7 +13,9 @@ The contents of this document follow the order of the procedure.
 
 The "surface" is a straight line that the sample **intersects**. 
 
-To find the surface, we heavily blur the thresh image to get rid of the noise. Then, for the first and last columns, we find the first white pixels and assume they are the surface. After, we connect the pixels with a straight line: $$ y = mx + b $$
+To find the surface, we heavily blur the thresh image to get rid of the noise. Then, for the first and last columns, we find the first white pixels and assume they are the surface. After, we connect the pixels with a straight line: 
+
+$$ y = mx + b $$
 
 The functions defined in lines 90 - 119 do the procedure above: 
 
