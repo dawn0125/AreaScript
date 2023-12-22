@@ -135,7 +135,7 @@ The threshing is then implemented in lines 218 - 222:
 
 
 ```python
-lines 218 - 222: 
+# lines 218 - 222: 
 if manual_threshing == True:
     thresh_img = threshManual(blurred, lower_thresh, upper_thresh)
 
